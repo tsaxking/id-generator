@@ -69,17 +69,6 @@
             "email": "",
             "verified": 1
         }, {
-            "username": "scout",
-            "key": "",
-            "salt": "",
-            "info": {},
-            "roles": [
-                "scout"
-            ],
-            "name": "Scout",
-            "email": "",
-            "verified": 1
-        }, {
             "username": "viewer",
             "key": "",
             "salt": "",
@@ -88,17 +77,6 @@
                 "viewer"
             ],
             "name": "Viewer",
-            "email": "",
-            "verified": 1
-        }, {
-            "username": "mentor",
-            "key": "",
-            "salt": "",
-            "info": {},
-            "roles": [
-                "mentor"
-            ],
-            "name": "Mentor",
             "email": "",
             "verified": 1
         }, {
@@ -136,5 +114,25 @@
             "verified": 1
         }],
         "description": "All accounts in the system"
+    },
+
+
+
+
+
+    "ids": {
+        "columns": {
+            "id": {
+                "type": "string",
+                "primaryKey": true,
+                "description": "The id",
+                "init": "id TEXT UNIQUE NOT NULL"
+            },
+            "used": {
+                "type": "boolean",
+                "description": "Whether or not the id is used",
+                "init": "used INTEGER NOT NULL"
+            }
+        }
     }
 }

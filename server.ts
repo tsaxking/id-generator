@@ -35,47 +35,7 @@ const [,, env, ...args] = workerData?.args || process.argv;
 const app = express();
 
 const server = http.createServer(app);
-const io = new Server(server);
 
-io.on('connection', (socket) => {
-    console.log('a user connected');
-    const s = Session.addSocket(socket);
-    if (!s) return;
-    // your socket code here
-
-    // ▄▀▀ ▄▀▄ ▄▀▀ █▄▀ ██▀ ▀█▀ ▄▀▀ 
-    // ▄█▀ ▀▄▀ ▀▄▄ █ █ █▄▄  █  ▄█▀ 
-
-
-    socket.on('ping', () => socket.emit('pong'));
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    socket.on('disconnect', () => console.log('user disconnected'));
-});
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json({ limit: '50mb' }));
@@ -84,7 +44,6 @@ app.use('/uploads', express.static(path.resolve(__dirname, './uploads')));
 
 
 app.use((req, res, next) => {
-    req.io = io;
     req.start = Date.now();
     console.log(req.ip);
 
@@ -184,14 +143,14 @@ app.use((req, res, next) => {
 //     }
 // } as Options));
 
-app.post('/*', emailValidation(['email', 'confirmEmail'], {
-    onspam: (req, res, next) => {
-        res.json({ error: 'spam' });
-    },
-    onerror: (req, res, next) => {
-        res.json({ error: 'error' });
-    }
-}));
+// app.post('/*', emailValidation(['email', 'confirmEmail'], {
+//     onspam: (req, res, next) => {
+//         res.json({ error: 'spam' });
+//     },
+//     onerror: (req, res, next) => {
+//         res.json({ error: 'error' });
+//     }
+// }));
 
 
 
@@ -204,29 +163,29 @@ app.post('/*', emailValidation(['email', 'confirmEmail'], {
 // app.use(builder);
 
 
-import accounts from './server-functions/routes/account';
-app.use('/account', accounts);
+// import accounts from './server-functions/routes/account';
+// app.use('/account', accounts);
 
 
-app.use(async (req, res, next) => {
-    const username = process.env.AUTO_SIGN_IN as string;
-    // if auto sign in is enabled, sign in as the user specified in the .env file
-    if (env !== 'prod' && username && req.session.account?.username !== username) {
-        const account = await Account.fromUsername(username as string);
-        if (account) {
-            req.session.signIn(account);
-        }
-    }
-    next();
-});
+// app.use(async (req, res, next) => {
+//     const username = process.env.AUTO_SIGN_IN as string;
+//     // if auto sign in is enabled, sign in as the user specified in the .env file
+//     if (env !== 'prod' && username && req.session.account?.username !== username) {
+//         const account = await Account.fromUsername(username as string);
+//         if (account) {
+//             req.session.signIn(account);
+//         }
+//     }
+//     next();
+// });
 
 
-app.use((req, res, next) => {
-    if (!req.session.account) {
-        return Status.from('account.notLoggedIn', req).send(res);
-    }
-    next();
-});
+// app.use((req, res, next) => {
+//     if (!req.session.account) {
+//         return Status.from('account.notLoggedIn', req).send(res);
+//     }
+//     next();
+// });
 
 
 
@@ -237,6 +196,7 @@ app.use((req, res, next) => {
 
 import admin from './server-functions/routes/admin';
 import { getTemplateSync, getJSON, log, LogType } from './server-functions/files';
+import { uuid } from './server-functions/structure/uuid';
 app.use('/admin', admin);
 
 
@@ -266,62 +226,21 @@ type Link = {
     permission?: string;
 };
 
-type Page = {
-    title: string;
-    links: Link[];
-    display: boolean;
-};
 
 
-app.get('/get-links', async (req, res) => {
-    const pages = await getJSON('pages') as Page[];
 
-    // at this point, account should exist because of the middleware above
-    const permissions = await req.session.account?.getPermissions();
 
-    let links: any[] = [];
-    pages.forEach(page => {
-        links = [
-            ...links,
-            ...page.links.filter(l => {
-                if (l.permission) {
-                    // console.log(l.permission, permissions[l.permission]);
-                    return permissions ? permissions[l.permission] : false; 
-                } else return l.display;
-            })
-        ];
-    });
-    res.json(links.filter(l => l.display));
+
+
+app.post('/uuid', (req, res, next) => {
+    const { n, apiKey } = req.body;
+    if (apiKey !== process.env.API_KEY) {
+        return res.json({ error: 'Invalid API Key' });
+    }
+    const ids = new Array(Math.round(n)).fill('').map(() => uuid());
+    res.json(ids);
+    next();
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -343,12 +262,12 @@ type Log = {
 let logCache: Log[] = [];
 
 // sends logs to client every 10 seconds
-setInterval(() => {
-    if (logCache.length) {
-        io.to('logs').emit('request-logs', logCache);
-        logCache = [];
-    }
-}, 1000 * 10);
+// setInterval(() => {
+//     if (logCache.length) {
+//         io.to('logs').emit('request-logs', logCache);
+//         logCache = [];
+//     }
+// }, 1000 * 10);
 
 app.use((req, res, next) => {
     const csvObj: Log = {
